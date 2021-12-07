@@ -1,0 +1,31 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - gnupg
+  - ca-certificates
+  - vim
+
+runcmd:
+  - set -ex
+
+  # Install Docker
+  #- curl -sfL https://releases.rancher.com/install-docker/20.10.sh | sh -
+  - curl -sfL https://get.docker.io | sh -
+  - docker info
+
+  - >
+    docker run -d
+    --privileged
+    --restart=unless-stopped
+    --net=host
+    -v /etc/kubernetes:/etc/kubernetes
+    -v /var/run:/var/run
+    --name rancher-agent
+    rancher/rancher-agent:v2.6.2
+    --server ${rancher_url}
+    --token ${rancher_agent_token}
+    %{if rancher_agent_cp}--etcd --controlplane%{endif}
+    %{if rancher_agent_worker}--worker%{endif}
